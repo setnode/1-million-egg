@@ -24,7 +24,6 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
-        <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js" async></script>
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { parseEther } from 'viem';
 import toast, { Toaster } from 'react-hot-toast';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/constants/contract';
+import sdk from '@farcaster/frame-sdk';
 
 interface FloatingText {
   id: number;
@@ -33,17 +34,10 @@ export default function Home() {
   // Notify Farcaster Frame v2 that the app has finished loading to dismiss the splash screen
   useEffect(() => {
     const initFarcaster = async () => {
-      // Small delay to ensure the async CDN script has parsed
-      await new Promise(resolve => setTimeout(resolve, 500));
-      if (typeof window !== 'undefined' && (window as any).farcaster) {
-        try {
-          (window as any).farcaster.actions.ready();
-        } catch (e) {
-          console.error("Failed to call farcaster ready:", e);
-        }
-      } else {
-        // Fallback postMessage just in case
-        window.parent?.postMessage({ type: "frame_ready" }, "*");
+      try {
+        await sdk.actions.ready();
+      } catch (e) {
+        console.error("Failed to call farcaster ready:", e);
       }
     };
     initFarcaster();
