@@ -168,9 +168,9 @@ export const CONTRACT_ABI = [
             "type": "uint256"
           }
         ],
-        "internalType": "struct EggClicker.PlayerScore[100]",
+        "internalType": "struct EggClicker.PlayerScore[20]",
         "name": "",
-        "type": "tuple[100]"
+        "type": "tuple[20]"
       }
     ],
     "stateMutability": "view",
