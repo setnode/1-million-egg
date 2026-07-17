@@ -241,7 +241,6 @@ export default function Home() {
         <div 
           className={`egg-wrapper ${isClicked ? 'clicked' : ''}`}
           onClick={handleTap}
-          onTouchStart={(e) => { e.preventDefault(); handleTap(e); }}
         >
           <div className="egg-glow"></div>
           <Image 
