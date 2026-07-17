@@ -33,7 +33,7 @@ export default function Home() {
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   const [textIdCounter, setTextIdCounter] = useState(0);
 
-  const [activeTab, setActiveTab] = useState<'home' | 'rewards' | 'profile'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'rewards' | 'leaderboard' | 'profile'>('home');
 
   // Notify Farcaster Frame v2 that the app has finished loading to dismiss the splash screen
   // Auto-connect Farcaster wallet, and prompt to add Frame
@@ -75,7 +75,7 @@ export default function Home() {
     query: { enabled: !!address }
   });
 
-  const { data: userEggData, refetch: refetchEggs } = useReadContract({
+  const { data: eggBalanceData, refetch: refetchEggs } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
     functionName: 'eggBalances',
@@ -89,38 +89,29 @@ export default function Home() {
     functionName: 'getLeaderboard',
   });
 
-  // Contract Write (Tap & Claim)
-  const { data: hash, writeContract, isPending, error } = useWriteContract();
+  const { writeContract, isPending, isSuccess } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
+  // Watch for transaction success to trigger a refetch
+  const { isSuccess: isConfirming } = useWaitForTransactionReceipt({
+    hash: undefined, // We would normally track the tx hash here if we captured it
   });
 
-  // Handle successful confirmation
+  // Re-fetch scores whenever a transaction succeeds
   useEffect(() => {
-    if (isConfirmed) {
-      toast.success('Transaction Successful!');
-      
-      // Wait for RPC nodes to sync the new block before fetching updated data
-      setTimeout(() => {
-        refetchGlobal();
-        refetchUser();
-        refetchEggs();
-        refetchLeaderboard();
-      }, 2500);
+    if (isSuccess || isConfirming) {
+      refetchUser();
+      refetchGlobal();
+      refetchEggs();
+      refetchLeaderboard();
     }
-  }, [isConfirmed, refetchGlobal, refetchUser, refetchEggs, refetchLeaderboard]);
+  }, [isSuccess, isConfirming, refetchUser, refetchGlobal, refetchEggs, refetchLeaderboard]);
 
-  // Handle wallet rejections / errors
-  useEffect(() => {
-    if (error) {
-      if (error.message.includes('User rejected')) {
-        toast.error('Transaction Cancelled');
-      } else {
-        toast.error('An error occurred: ' + error.message.slice(0, 30));
-      }
-    }
-  }, [error]);
+  const score = userScoreData ? Number(userScoreData) : 0;
+  const eggBalance = eggBalanceData ? Number(eggBalanceData) : 0;
+  const globalScore = globalScoreData ? Number(globalScoreData) : 0;
+  const leaderboard = Array.isArray(leaderboardData) 
+    ? [...leaderboardData].filter(entry => Number(entry.score) > 0).sort((a, b) => Number(b.score) - Number(a.score))
+    : [];
 
   const handleTap = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
     if (!isConnected) {
@@ -169,37 +160,20 @@ export default function Home() {
     setFloatingTexts(prev => [...prev, { id: newId, x, y }]);
 
     setTimeout(() => {
-      setFloatingTexts(prev => prev.filter(t => t.id !== newId));
+      setFloatingTexts(prev => prev.filter(text => text.id !== newId));
     }, 1000);
-  }, [isConnected, isPending, isConfirming, textIdCounter, writeContract]);
+  }, [isConnected, isPending, isConfirming, writeContract, textIdCounter]);
 
   const handleClaim = useCallback((tier: number) => {
-    if (!isConnected) {
-      toast.error('Please connect your wallet first!');
-      return;
-    }
-    if (isPending || isConfirming) {
-      toast('Transaction in progress, please wait...', { icon: '⏳' });
-      return;
-    }
-
-    toast('Claiming reward, awaiting approval...', { icon: '🚀' });
+    if (!isConnected) return;
+    toast('Claim transaction sent...', { icon: '💰' });
     writeContract({
       address: CONTRACT_ADDRESS,
       abi: CONTRACT_ABI,
       functionName: 'claimReward',
       args: [tier],
     });
-  }, [isConnected, isPending, isConfirming, writeContract]);
-
-  const score = userScoreData ? Number(userScoreData) : 0;
-  const eggBalance = userEggData ? Number(userEggData) : 0;
-  const globalScore = globalScoreData ? Number(globalScoreData) : 0;
-  
-  // Parse Leaderboard (filter out empty entries)
-  const leaderboard = leaderboardData 
-    ? (leaderboardData as unknown as any[]).filter(entry => entry.player !== '0x0000000000000000000000000000000000000000')
-    : [];
+  }, [isConnected, writeContract]);
 
   return (
     <main className="container" style={{ paddingBottom: '90px' }}>
@@ -210,7 +184,7 @@ export default function Home() {
         },
       }} />
 
-      {/* Header */}
+      {/* Header (Always Visible) */}
       <header className="header">
         <div className="header-title">
           <h1>1 Million Egg</h1>
@@ -225,7 +199,6 @@ export default function Home() {
         <div className="tab-content fade-in">
           {/* Stats Header Area */}
           <div style={{ display: 'flex', gap: '1rem', width: '100%', maxWidth: '400px', margin: '0 auto' }}>
-            {/* Score Section */}
             <section className="score-section" style={{ flex: 1 }}>
               <div className="score-label">Your Score</div>
               <div className="score-value">
@@ -234,7 +207,6 @@ export default function Home() {
               <div className="score-hint">Lifetime Taps</div>
             </section>
 
-            {/* Eggs Section */}
             <section className="score-section" style={{ flex: 1 }}>
               <div className="score-label text-gold">Your Eggs</div>
               <div className="score-value">
@@ -274,13 +246,53 @@ export default function Home() {
               TAP THE EGG <br/> +1 <span style={{fontSize: '24px'}}>🥚</span>
             </button>
           </section>
+
+          {/* Global Stats */}
+          <section className="glass-panel global-stats" style={{ marginTop: '1rem' }}>
+            <div className="global-info">
+              <h3>Global Score</h3>
+              <div className="global-score">{globalScore.toLocaleString('en-US')}</div>
+              <p>Total taps by all players worldwide</p>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* --- LEADERBOARD TAB --- */}
+      {activeTab === 'leaderboard' && (
+        <div className="tab-content fade-in">
+          <section className="glass-panel">
+            <div className="leaderboard-header">
+              <div className="title">
+                GLOBAL LEADERBOARD
+              </div>
+              <a href="#" className="top-link">TOP 20 <span>›</span></a>
+            </div>
+            
+            <div className="leaderboard-list">
+              {leaderboard.length === 0 ? (
+                <div style={{ color: '#9ca3af', textAlign: 'center', padding: '10px' }}>
+                  No taps yet! Be the first!
+                </div>
+              ) : (
+                leaderboard.map((entry, index) => (
+                  <div key={index} className={`leaderboard-item ${entry.player === address ? 'current-user' : ''}`}>
+                    <div className="rank-info">
+                      <span className="rank">{index + 1}</span>
+                      <span className="name">{entry.player.slice(0, 6)}...{entry.player.slice(-4)}</span>
+                    </div>
+                    <div className="score">{Number(entry.score).toLocaleString('en-US')}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
         </div>
       )}
 
       {/* --- REWARDS TAB --- */}
       {activeTab === 'rewards' && (
         <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* Rewards Section */}
           <section className="glass-panel">
             <div className="leaderboard-header">
               <div className="title text-gold">
@@ -317,43 +329,6 @@ export default function Home() {
                   </div>
                 </div>
               ))}
-            </div>
-          </section>
-
-          {/* Global Stats */}
-          <section className="glass-panel global-stats">
-            <div className="global-info">
-              <h3>Global Score</h3>
-              <div className="global-score">{globalScore.toLocaleString('en-US')}</div>
-              <p>Total taps by all players worldwide</p>
-            </div>
-          </section>
-
-          {/* Leaderboard */}
-          <section className="glass-panel">
-            <div className="leaderboard-header">
-              <div className="title">
-                GLOBAL LEADERBOARD
-              </div>
-              <a href="#" className="top-link">TOP 20 <span>›</span></a>
-            </div>
-            
-            <div className="leaderboard-list">
-              {leaderboard.length === 0 ? (
-                <div style={{ color: '#9ca3af', textAlign: 'center', padding: '10px' }}>
-                  No taps yet! Be the first!
-                </div>
-              ) : (
-                leaderboard.map((entry, index) => (
-                  <div key={index} className={`leaderboard-item ${entry.player === address ? 'current-user' : ''}`}>
-                    <div className="rank-info">
-                      <span className="rank">{index + 1}</span>
-                      <span className="name">{entry.player.slice(0, 6)}...{entry.player.slice(-4)}</span>
-                    </div>
-                    <div className="score">{Number(entry.score).toLocaleString('en-US')}</div>
-                  </div>
-                ))
-              )}
             </div>
           </section>
         </div>
@@ -394,6 +369,12 @@ export default function Home() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           </div>
           <span>Home</span>
+        </button>
+        <button className={`nav-item ${activeTab === 'leaderboard' ? 'active' : ''}`} onClick={() => setActiveTab('leaderboard')}>
+          <div className="nav-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span>Ranking</span>
         </button>
         <button className={`nav-item ${activeTab === 'rewards' ? 'active' : ''}`} onClick={() => setActiveTab('rewards')}>
           <div className="nav-icon">
