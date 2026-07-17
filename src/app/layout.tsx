@@ -11,6 +11,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "1 Million Egg",
   description: "Tap the egg. Earn eggs. Claim USDC.",
+  other: {
+    "base:app_id": "6a5aa2e9a0fe5cd3aaa83293"
+  }
 };
 
 export default function RootLayout({
