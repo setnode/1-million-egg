@@ -7,18 +7,20 @@
   "frame": {
     "name": "1 Million Egg",
     "version": "1",
-    "iconUrl": "https://1-million-egg.vercel.app/egg.png",
+    "iconUrl": "https://1-million-egg.vercel.app/icon.png",
     "homeUrl": "https://1-million-egg.vercel.app",
-    "imageUrl": "https://1-million-egg.vercel.app/egg.png",
+    "imageUrl": "https://1-million-egg.vercel.app/image.png",
     "buttonTitle": "Tap the Egg",
+    "splashImageUrl": "https://1-million-egg.vercel.app/splash.png",
+    "splashBackgroundColor": "#6200EA",
     "webhookUrl": "https://1-million-egg.vercel.app/api/webhook",
     "subtitle": "Tap the egg, climb the leaderboard, earn USDC!",
     "description": "1 Million Egg is a viral on-chain clicker game on Base. Tap the legendary egg, climb the global Top 20 leaderboard, and claim real USDC rewards directly to your wallet! Instant transactions, zero friction.",
     "primaryCategory": "games",
-    "heroImageUrl": "https://1-million-egg.vercel.app/egg.png",
     "screenshotUrls": [
       "https://1-million-egg.vercel.app/egg.png"
     ],
+    "heroImageUrl": "https://1-million-egg.vercel.app/egg.png",
     "tags": [
       "clicker",
       "game",

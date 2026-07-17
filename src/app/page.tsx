@@ -30,6 +30,25 @@ export default function Home() {
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   const [textIdCounter, setTextIdCounter] = useState(0);
 
+  // Notify Farcaster Frame v2 that the app has finished loading to dismiss the splash screen
+  useEffect(() => {
+    const initFarcaster = async () => {
+      // Small delay to ensure the async CDN script has parsed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      if (typeof window !== 'undefined' && (window as any).farcaster) {
+        try {
+          (window as any).farcaster.actions.ready();
+        } catch (e) {
+          console.error("Failed to call farcaster ready:", e);
+        }
+      } else {
+        // Fallback postMessage just in case
+        window.parent?.postMessage({ type: "frame_ready" }, "*");
+      }
+    };
+    initFarcaster();
+  }, []);
+
   // Contract Reads
   const { data: globalScoreData, refetch: refetchGlobal } = useReadContract({
     address: CONTRACT_ADDRESS,
