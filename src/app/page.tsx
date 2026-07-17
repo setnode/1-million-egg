@@ -70,10 +70,14 @@ export default function Home() {
   useEffect(() => {
     if (isConfirmed) {
       toast.success('Transaction Successful!');
-      refetchGlobal();
-      refetchUser();
-      refetchEggs();
-      refetchLeaderboard();
+      
+      // Wait for RPC nodes to sync the new block before fetching updated data
+      setTimeout(() => {
+        refetchGlobal();
+        refetchUser();
+        refetchEggs();
+        refetchLeaderboard();
+      }, 2500);
     }
   }, [isConfirmed, refetchGlobal, refetchUser, refetchEggs, refetchLeaderboard]);
 
