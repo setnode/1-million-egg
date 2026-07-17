@@ -294,7 +294,7 @@ export default function Home() {
           <div className="title">
             GLOBAL LEADERBOARD
           </div>
-          <a href="#" className="top-link">TOP 100 <span>›</span></a>
+          <a href="#" className="top-link">TOP 20 <span>›</span></a>
         </div>
         
         <div className="leaderboard-list">
