@@ -42,8 +42,14 @@ export default function Home() {
 
         // Prompt to Add Mini App if not added
         const context = await sdk.context;
-        if (context?.client && !context.client.added) {
-          sdk.actions.addFrame();
+        if (context?.client) {
+          // If we are inside Farcaster, forcefully trigger the connection approval
+          // If already approved, it silently connects. If not, Farcaster shows the approval modal.
+          connect({ connector: farcasterFrame() });
+
+          if (!context.client.added) {
+            sdk.actions.addFrame();
+          }
         }
       } catch (e) {
         console.error("Failed to call farcaster ready:", e);
