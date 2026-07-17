@@ -1,11 +1,37 @@
 {
+  "accountAssociation": {
+    "header": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
+    "payload": "eyJkb21haW4iOiIxLW1pbGxpb24tZWdnLnZlcmNlbC5hcHAifQ",
+    "signature": ""
+  },
   "frame": {
-    "version": "1",
     "name": "1 Million Egg",
+    "version": "1",
     "iconUrl": "https://1-million-egg.vercel.app/egg.png",
     "homeUrl": "https://1-million-egg.vercel.app",
     "imageUrl": "https://1-million-egg.vercel.app/egg.png",
     "buttonTitle": "Tap the Egg",
-    "webhookUrl": "https://1-million-egg.vercel.app/api/webhook"
+    "splashImageUrl": "https://1-million-egg.vercel.app/egg.png",
+    "splashBackgroundColor": "#0f1115",
+    "webhookUrl": "https://1-million-egg.vercel.app/api/webhook",
+    "subtitle": "Tap the egg, climb the leaderboard, earn USDC!",
+    "description": "1 Million Egg is a viral on-chain clicker game on Base. Tap the legendary egg, climb the global Top 20 leaderboard, and claim real USDC rewards directly to your wallet! Instant transactions, zero friction.",
+    "primaryCategory": "games",
+    "heroImageUrl": "https://1-million-egg.vercel.app/egg.png",
+    "screenshotUrls": [
+      "https://1-million-egg.vercel.app/egg.png"
+    ],
+    "tags": [
+      "clicker",
+      "game",
+      "usdc",
+      "base",
+      "earn"
+    ],
+    "tagline": "Tap the egg, earn real USDC!",
+    "ogTitle": "1 Million Egg on Base",
+    "ogDescription": "I'm tapping the egg to climb the Top 20 leaderboard and earn USDC on Base. Come join me!",
+    "ogImageUrl": "https://1-million-egg.vercel.app/egg.png",
+    "castShareUrl": "https://warpcast.com/~/compose?text=I'm+tapping+the+1+Million+Egg+on+Base!+Come+join+me+and+earn+USDC.&embeds[]=https://1-million-egg.vercel.app"
   }
 }
