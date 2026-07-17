@@ -53,11 +53,8 @@ export default function Home() {
     query: { enabled: !!address }
   });
 
-  const { data: leaderboardData, refetch: refetchLeaderboard } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
-    functionName: 'getLeaderboard',
-  });
+  const leaderboardData: any[] = []; // Disabled for gas optimization, will be moved to indexer
+  const refetchLeaderboard = () => {};
 
   // Contract Write (Tap & Claim)
   const { data: hash, writeContract, isPending, error } = useWriteContract();

@@ -35,13 +35,6 @@ contract EggClicker is ReentrancyGuard {
     
     mapping(address => uint256) public scores;
     mapping(address => uint256) public eggBalances;
-    
-    struct PlayerScore {
-        address player;
-        uint256 score;
-    }
-    
-    PlayerScore[100] public leaderboard;
 
     event Tapped(address indexed player, uint256 newScore, uint256 globalScore, uint256 newEggBalance);
     event RewardClaimed(address indexed player, uint256 usdcAmount, uint256 eggsSpent);
@@ -65,8 +58,6 @@ contract EggClicker is ReentrancyGuard {
         scores[msg.sender] = newScore;
         eggBalances[msg.sender] += 1;
         globalScore += 1;
-        
-        updateLeaderboard(msg.sender, newScore);
 
         emit Tapped(msg.sender, newScore, globalScore, eggBalances[msg.sender]);
     }
@@ -108,47 +99,6 @@ contract EggClicker is ReentrancyGuard {
         require(usdcToken.transfer(msg.sender, usdcReward), "USDC Transfer failed");
 
         emit RewardClaimed(msg.sender, usdcReward, requiredEggs);
-    }
-
-    function updateLeaderboard(address player, uint256 score) internal {
-        uint256 insertIndex = 100;
-        uint256 playerCurrentIndex = 100;
-
-        for (uint256 i = 0; i < 100; i++) {
-            if (leaderboard[i].player == player) {
-                playerCurrentIndex = i;
-                break;
-            }
-        }
-
-        for (uint256 i = 0; i < 100; i++) {
-            if (score > leaderboard[i].score) {
-                insertIndex = i;
-                break;
-            }
-        }
-
-        if (insertIndex < 100) {
-            if (playerCurrentIndex < 100) {
-                if (insertIndex < playerCurrentIndex) {
-                    for (uint256 j = playerCurrentIndex; j > insertIndex; j--) {
-                        leaderboard[j] = leaderboard[j - 1];
-                    }
-                    leaderboard[insertIndex] = PlayerScore(player, score);
-                } else {
-                    leaderboard[playerCurrentIndex].score = score;
-                }
-            } else {
-                for (uint256 j = 99; j > insertIndex; j--) {
-                    leaderboard[j] = leaderboard[j - 1];
-                }
-                leaderboard[insertIndex] = PlayerScore(player, score);
-            }
-        }
-    }
-    
-    function getLeaderboard() external view returns (PlayerScore[100] memory) {
-        return leaderboard;
     }
 
     function withdrawETH() external onlyOwner {
