@@ -16,8 +16,30 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://1-million-egg.vercel.app'),
   title: "1 Million Egg",
   description: "Tap the egg. Earn eggs. Claim USDC.",
+  openGraph: {
+    title: "1 Million Egg 🥚",
+    description: "Tap the egg. Earn eggs. Climb the leaderboard and claim USDC rewards!",
+    url: "https://1-million-egg.vercel.app",
+    siteName: "1 Million Egg",
+    images: [
+      {
+        url: "/egg.png",
+        width: 800,
+        height: 800,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "1 Million Egg 🥚",
+    description: "Tap the egg. Earn eggs. Climb the leaderboard and claim USDC rewards!",
+    images: ["/egg.png"],
+  },
   other: {
     "base:app_id": "6a5aa2e9a0fe5cd3aaa83293"
   }
