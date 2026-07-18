@@ -458,7 +458,7 @@ export default function Home() {
             <button 
               onClick={() => {
                   const text = encodeURIComponent(`I've tapped ${score.toLocaleString()} eggs and earned ${eggBalance.toLocaleString()} 🥚 on 1 Million Egg! Can you beat me?`);
-                  window.open(`https://twitter.com/intent/tweet?text=${text}&url=https://1-million-egg.vercel.app`, '_blank');
+                  window.open(`https://twitter.com/intent/tweet?text=${text}&url=https://farcaster.xyz/miniapps/0wCsGfEbFiQQ/1-million-egg`, '_blank');
                   setShowShareModal(false);
               }}
               style={{ width: '100%', padding: '14px', background: '#1da1f2', color: '#fff', border: 'none', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}
@@ -470,7 +470,7 @@ export default function Home() {
             <button 
               onClick={() => {
                   const text = encodeURIComponent(`I've tapped ${score.toLocaleString()} eggs and earned ${eggBalance.toLocaleString()} 🥚 on 1 Million Egg! Can you beat me?`);
-                  sdk.actions.openUrl(`https://warpcast.com/~/compose?text=${text}&embeds[]=https://1-million-egg.vercel.app`);
+                  sdk.actions.openUrl(`https://warpcast.com/~/compose?text=${text}&embeds[]=https://farcaster.xyz/miniapps/0wCsGfEbFiQQ/1-million-egg`);
                   setShowShareModal(false);
               }}
               style={{ width: '100%', padding: '14px', background: '#8a63d2', color: '#fff', border: 'none', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}
@@ -481,7 +481,7 @@ export default function Home() {
 
             <button 
               onClick={() => {
-                  navigator.clipboard.writeText("https://1-million-egg.vercel.app");
+                  navigator.clipboard.writeText("https://farcaster.xyz/miniapps/0wCsGfEbFiQQ/1-million-egg");
                   toast.success("Link copied to clipboard!");
                   setShowShareModal(false);
               }}
