@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // However, in Vercel Edge/Serverless, calling localhost isn't always reliable.
     // Let's fallback rank to "Top 100" or leave it as "-" if fetch fails.
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://1-million-egg.vercel.app';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://1millionegg.xyz';
       const res = await fetch(`${baseUrl}/api/leaderboard?user=${address}`, { next: { revalidate: 60 } });
       if (res.ok) {
         const lbData = await res.json();
@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   // Construct OG Image URL
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://1-million-egg.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://1millionegg.xyz';
   const ogUrl = new URL(`${baseUrl}/api/og/profile`);
   ogUrl.searchParams.set('user', address);
   ogUrl.searchParams.set('eggs', eggs.toString());

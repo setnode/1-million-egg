@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { ViemLeaderboardService } from '@/services/leaderboard';
 
-// Enable ISR (Incremental Static Regeneration) cache. Revalidate every 10 seconds.
-export const revalidate = 10;
+// Force dynamic rendering to suppress Next.js static build warnings.
+export const dynamic = "force-dynamic";
 
 const service = new ViemLeaderboardService();
 

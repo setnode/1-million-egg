@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 
 export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 // We need an absolute URL for the egg image since Satori requires it, or we fetch it.
 // Assuming the app is deployed at the current host.
