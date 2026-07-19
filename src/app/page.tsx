@@ -28,7 +28,7 @@ export default function Home() {
 
   const handleCopyLink = useCallback(() => {
     if (!address) return;
-    navigator.clipboard.writeText(`https://1millionegg.xyz/player/${address}`);
+    navigator.clipboard.writeText("https://1millionegg.xyz/");
     toast.success("Profile link copied!");
     setShowShareOptions(false);
   }, [address]);
@@ -883,7 +883,7 @@ export default function Home() {
                   {showShareOptions && (
                     <div className="absolute bottom-[110%] left-0 flex w-full flex-col gap-1 rounded-2xl border border-white/10 bg-[#0f1115]/95 p-2 shadow-2xl backdrop-blur-xl z-50">
                       <a
-                        href={`https://x.com/intent/tweet?text=${encodeURIComponent("🥚 I just shared my 1 Million Egg profile!\n\nThink you can beat my score?\n\nTap the Egg. Earn Real USDC.\n\nhttps://1millionegg.xyz/player/" + address)}`}
+                        href={`https://x.com/intent/tweet?text=${encodeURIComponent("🥚 Tap the Egg. Earn Real USDC.\n\nhttps://1millionegg.xyz/")}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => setShowShareOptions(false)}
@@ -895,7 +895,7 @@ export default function Home() {
                         Share on X
                       </a>
                       <a
-                        href={`https://warpcast.com/~/compose?text=${encodeURIComponent("🥚 I just shared my 1 Million Egg profile!\n\nThink you can beat my score?\n\nTap the Egg. Earn Real USDC.\n\nhttps://1millionegg.xyz/player/" + address)}`}
+                        href={`https://warpcast.com/~/compose?text=${encodeURIComponent("🥚 Tap the Egg. Earn Real USDC.\n\nhttps://1millionegg.xyz/")}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => setShowShareOptions(false)}
