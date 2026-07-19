@@ -28,7 +28,7 @@ const geistMono = Geist_Mono({
 
 const frameMetadata = {
   version: "next",
-  imageUrl: "https://1millionegg.xyz/og.png",
+  imageUrl: "https://1millionegg.xyz/og.png?v=3",
   button: {
     title: "Play 1 Million Egg",
     action: {
