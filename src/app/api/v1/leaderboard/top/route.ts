@@ -17,6 +17,14 @@ export async function GET(request: Request) {
     const data = await withCache(cacheKey, 30, async () => {
       if (!db) throw new Error("Database not configured");
 
+      if (type === 'debug_tables') {
+        const tables = await db.execute(sql`
+          SELECT table_schema, table_name 
+          FROM information_schema.tables 
+          WHERE table_schema IN ('public', 'ponder', 'public', 'base')
+        `);
+        return tables;
+      }
       if (type === 'all') {
         const result = await db.execute(sql`
           SELECT 
