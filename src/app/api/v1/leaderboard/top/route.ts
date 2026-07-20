@@ -19,7 +19,9 @@ export async function GET(request: Request) {
 
       if (type === 'debug_tables') {
         const tables = await db.execute(sql`
-          SELECT * FROM _ponder_meta
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'b56e__SeasonPlayer'
         `);
         return tables;
       }
