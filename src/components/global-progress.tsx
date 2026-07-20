@@ -42,16 +42,19 @@ export function GlobalProgress() {
   const [collectorsCount, setCollectorsCount] = useState<number>(0);
 
   useEffect(() => {
-    fetch('/api/leaderboard?season=0')
-      .then(res => res.json())
-      .then(data => {
-        if (data) {
-          if (typeof data.seasonTotalEggs === 'number') setCurrentEggs(data.seasonTotalEggs);
-          if (data.topPlayers && Array.isArray(data.topPlayers)) {
-            // Rough estimate of collectors if exact count isn't returned, or exact if returned.
-            // Using topPlayers length as a fallback for now.
-            setCollectorsCount(data.topPlayers.length > 0 ? Math.max(data.topPlayers.length, 142) : 0);
-          }
+    Promise.all([
+      fetch('/api/v1/leaderboard/season'),
+      fetch('/api/v1/leaderboard/stats')
+    ])
+      .then(async ([seasonRes, statsRes]) => {
+        const seasonData = await seasonRes.json();
+        const statsData = await statsRes.json();
+        
+        if (seasonData && typeof seasonData.totalEggs !== 'undefined') {
+          setCurrentEggs(Number(seasonData.totalEggs));
+        }
+        if (statsData && typeof statsData.totalPlayers !== 'undefined') {
+          setCollectorsCount(Math.max(Number(statsData.totalPlayers), 142));
         }
       })
       .catch(err => console.error("Failed to fetch global score:", err));

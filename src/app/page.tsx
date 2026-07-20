@@ -4,8 +4,8 @@ import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { Share2, Copy } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, useConnect, useDisconnect } from 'wagmi';
-import { parseEther } from 'viem';
+import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, useConnect, useDisconnect, usePublicClient, useWalletClient } from 'wagmi';
+import { parseEther, formatEther } from 'viem';
 import toast, { Toaster } from 'react-hot-toast';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/constants/contract';
 import sdk from '@farcaster/frame-sdk';
@@ -22,7 +22,9 @@ interface FloatingText {
 import { REWARD_TIERS } from '@/constants/rewards';
 
 export default function Home() {
-  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
+  const { address, isConnected, isConnecting, isReconnecting, connector, chain } = useAccount();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
   const [isMounted, setIsMounted] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
 
@@ -122,12 +124,37 @@ export default function Home() {
   const { data: leaderboardData, isLoading: isLeaderboardLoading, error: leaderboardError, refetch: refetchLeaderboard } = useQuery({
     queryKey: ['leaderboard', selectedSeasonTab, address],
     queryFn: async () => {
-      const res = await fetch(`/api/leaderboard?season=${selectedSeasonTab}${address ? `&user=${address}` : ''}`);
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Failed to fetch leaderboard');
-      }
-      return res.json();
+      const type = selectedSeasonTab === '0' ? 'season' : 'all';
+      const [topRes, statsRes, seasonRes, playerRes] = await Promise.all([
+        fetch(`/api/v1/leaderboard/top?type=${type}`),
+        fetch(`/api/v1/leaderboard/stats`),
+        fetch(`/api/v1/leaderboard/season`),
+        address ? fetch(`/api/v1/leaderboard/player/${address}`) : Promise.resolve(null)
+      ]);
+
+      const topPlayers = await topRes.json();
+      const stats = await statsRes.json();
+      const seasonData = await seasonRes.json();
+      const playerInfo = playerRes ? await playerRes.json() : null;
+
+      // Transform back to expected legacy format for UI compatibility
+      return {
+        topPlayers: topPlayers.map((p: any) => ({
+          address: p.address,
+          seasonEggs: p.seasonEggs || 0,
+          lifetimePoints: p.lifetimePoints || 0,
+          rank: Number(p.rank),
+        })),
+        yourRank: playerInfo ? {
+          address: playerInfo.id || address,
+          seasonEggs: playerInfo.seasonEggs || 0,
+          lifetimePoints: playerInfo.lifetimePoints || 0,
+          rank: Number(type === 'season' ? playerInfo.seasonRank : playerInfo.allTimeRank),
+        } : undefined,
+        totalPlayers: Number(stats.totalPlayers || 0),
+        seasonTarget: Number(seasonData.target || 1000000),
+        seasonTotalEggs: Number(seasonData.totalEggs || 0),
+      };
     },
     refetchInterval: 10000,
   });
@@ -135,7 +162,7 @@ export default function Home() {
   const currentLeaderboard = leaderboardData?.topPlayers || [];
   const yourRankData = leaderboardData?.yourRank;
 
-  const { data: hash, writeContract, isPending, isSuccess, error: writeError } = useWriteContract();
+  const { data: hash, writeContract, writeContractAsync, isPending, isSuccess, error: writeError } = useWriteContract();
 
   // Watch for transaction success to trigger a refetch
   const { isSuccess: isConfirmed, isLoading: isConfirming, error: receiptError } = useWaitForTransactionReceipt({
@@ -218,7 +245,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [lastClaimTime]);
 
-  const handleTap = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
+  const handleTap = useCallback(async (e?: React.MouseEvent | React.TouchEvent) => {
     if (!isConnected) {
       toast.error('Please connect your wallet first!');
       return;
@@ -239,12 +266,54 @@ export default function Home() {
 
     // Call the smart contract
     toast('Sent to wallet, awaiting approval...', { icon: '🚀' });
-    writeContract({
-      address: CONTRACT_ADDRESS,
-      abi: CONTRACT_ABI,
-      functionName: 'tap',
-      value: parseEther('0.0000055'),
-    });
+    
+    console.log("=== TRANSACTION DEBUG INFO ===");
+    console.log("useAccount().address:", address);
+    console.log("connector.id:", connector?.id);
+    console.log("connector.name:", connector?.name);
+    console.log("chain.id:", chain?.id);
+    console.log("isConnected:", isConnected);
+    console.log("FROM address sending tx:", address);
+    
+    if (publicClient && address) {
+      try {
+        const balance = await publicClient.getBalance({ address });
+        console.log("Balance:", formatEther(balance), "ETH");
+        console.log("publicClient.chain.id:", publicClient.chain?.id);
+      } catch (err) {
+        console.error("Error getting balance:", err);
+      }
+    }
+    
+    if (walletClient) {
+      try {
+        const walletChainId = await walletClient.getChainId();
+        console.log("Wallet Chain:", walletChainId);
+      } catch (err) {
+        console.error("Error getting wallet chain id:", err);
+      }
+    }
+    
+    console.log("==============================");
+    
+    try {
+      await writeContractAsync({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'tap',
+        value: parseEther('0.0000055'),
+      });
+    } catch (error: any) {
+      console.error("=== RAW TRANSACTION ERROR ===");
+      console.error("error:", error);
+      console.error("error.cause:", error?.cause);
+      console.error("error.details:", error?.details);
+      console.error("error.shortMessage:", error?.shortMessage);
+      console.error("error.code:", error?.code);
+      console.error("error.data:", error?.data);
+      console.error("Full Stack Trace:", error);
+      console.error("=============================");
+    }
 
     // Add floating text
     let x = 50;
@@ -266,7 +335,7 @@ export default function Home() {
     setTimeout(() => {
       setFloatingTexts(prev => prev.filter(text => text.id !== newId));
     }, 800);
-  }, [isConnected, isPending, isConfirming, writeContract]);
+  }, [isConnected, isPending, isConfirming, writeContract, writeContractAsync, address, connector, chain, publicClient, walletClient]);
 
   const handleClaimClick = useCallback((tier: number) => {
     if (!isConnected) {

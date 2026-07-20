@@ -1,0 +1,63 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/services/db';
+import { sql } from 'drizzle-orm';
+import { withCache } from '@/services/redis';
+
+export const dynamic = "force-dynamic";
+
+export async function GET(
+  request: Request,
+  { params }: { params: { address: string } }
+) {
+  try {
+    const address = params.address.toLowerCase();
+    const cacheKey = `v1:leaderboard:player:${address}`;
+    
+    const data = await withCache(cacheKey, 15, async () => {
+      if (!db) throw new Error("Database not configured");
+
+      // We need rank for season and all-time, plus total stats
+      const result = await db.execute(sql`
+        WITH UserStats AS (
+          SELECT p.id, p."lifetimePoints", p."totalTaps", p."lastActive", sp."seasonEggs"
+          FROM "Player" p
+          LEFT JOIN "SeasonPlayer" sp ON sp.address = p.id
+          WHERE p.id = ${address}
+        ),
+        SeasonRank AS (
+          SELECT COUNT(*) + 1 as rank
+          FROM "SeasonPlayer"
+          WHERE "seasonEggs" > (SELECT COALESCE("seasonEggs", 0) FROM UserStats)
+        ),
+        AllTimeRank AS (
+          SELECT COUNT(*) + 1 as rank
+          FROM "Player"
+          WHERE "lifetimePoints" > (SELECT COALESCE("lifetimePoints", 0) FROM UserStats)
+        )
+        SELECT 
+          u.*,
+          (SELECT rank FROM SeasonRank) as "seasonRank",
+          (SELECT rank FROM AllTimeRank) as "allTimeRank"
+        FROM UserStats u;
+      `);
+
+      if (result.length === 0) {
+        return {
+          address,
+          seasonEggs: 0,
+          lifetimePoints: 0,
+          totalTaps: 0,
+          seasonRank: 0,
+          allTimeRank: 0,
+        };
+      }
+
+      return result[0];
+    });
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("Leaderboard Player API Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
