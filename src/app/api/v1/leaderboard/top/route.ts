@@ -19,9 +19,10 @@ export async function GET(request: Request) {
 
       if (type === 'debug_tables') {
         const tables = await db.execute(sql`
-          SELECT table_schema, table_name 
+          SELECT table_schema, table_name, table_type 
           FROM information_schema.tables 
-          WHERE table_schema IN ('public', 'ponder', 'public', 'base')
+          WHERE table_schema IN ('public', 'ponder', 'base')
+          AND table_type = 'VIEW'
         `);
         return tables;
       }
