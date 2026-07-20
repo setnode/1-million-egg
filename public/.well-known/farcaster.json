@@ -2,7 +2,7 @@
   "accountAssociation": {
     "header": "eyJmaWQiOjQ5MjQ0MSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDdhZEM4M0JlZGE3MzBGRmQ3ODE0NjgyMzdGNTk2MDJiNUYwNjY5YzgifQ",
     "payload": "eyJkb21haW4iOiIxbWlsbGlvbmVnZy54eXoifQ",
-    "signature": "M2DnTrTd7vkmPlPbzHQmOoo0Du7lDV3dtT5Q9HdlZvBer7fIm7GZbixW8Wf2+EZcnS21VYQssfMecyFowZ3/JRw="
+    "signature": "K9sobKjrov+25tIqtkuDg4H90UJ46b/Np82GIYeD6/5fPbXXJFRZd6qMRMYwirsJ7ZOss2NQqKDrTpLUVVQtPxs="
   },
   "frame": {
     "name": "1 Million Egg",
