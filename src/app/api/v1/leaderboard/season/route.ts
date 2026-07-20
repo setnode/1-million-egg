@@ -15,7 +15,7 @@ export async function GET() {
 
       const prefix = await getPonderPrefix();
       const result = await db.execute(sql.raw(`
-        SELECT id, target, "totalEggs"
+        SELECT id, target, total_eggs as "totalEggs"
         FROM "${prefix}Season"
         ORDER BY id DESC
         LIMIT 1
