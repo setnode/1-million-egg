@@ -1,6 +1,6 @@
 import { createConfig } from "@ponder/core";
 import { http } from "viem";
-import { CONTRACT_ABI } from "../src/constants/contract";
+import { CONTRACT_ABI } from "./abi";
 
 // Support multiple addresses via comma separated string
 const addresses = (process.env.CONTRACT_ADDRESS || "0x64631f82EE4c071A6B05382435df3b9eB15f8122")
