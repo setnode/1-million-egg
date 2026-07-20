@@ -27,7 +27,7 @@ export async function getPonderPrefix(): Promise<string> {
           SELECT tablename 
           FROM pg_tables 
           WHERE schemaname = 'public' 
-          AND tablename = '${prefix}Player'
+          AND tablename = '${prefix}SeasonPlayer'
         `));
         
         if (checkRes.length > 0) {
@@ -69,7 +69,7 @@ export async function getPonderPrefix(): Promise<string> {
         SELECT tablename 
         FROM pg_tables 
         WHERE schemaname = 'public' 
-        AND tablename = '${prefix}Player'
+        AND tablename = '${prefix}SeasonPlayer'
       `));
       
       if (checkRes.length > 0) {
@@ -84,15 +84,15 @@ export async function getPonderPrefix(): Promise<string> {
       SELECT tablename 
       FROM pg_tables 
       WHERE schemaname = 'public' 
-      AND tablename LIKE '%__Player'
+      AND tablename LIKE '%__SeasonPlayer'
       AND tablename NOT LIKE '%_reorg_%'
+      ORDER BY tablename DESC
     `);
     
     if (directTables.length > 0) {
       // Just take the first one or we can sort them. The newest is usually fine.
-      // We will sort them by table name descending as a rough heuristic, or just pick the first.
       const t = directTables[0] as any;
-      const prefix = t.tablename.replace('Player', '');
+      const prefix = t.tablename.replace('SeasonPlayer', '');
       cachedPrefix = prefix;
       lastFetchTime = now;
       return cachedPrefix;
