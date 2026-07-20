@@ -156,7 +156,7 @@ export default function Home() {
         seasonTotalEggs: Number(seasonData.totalEggs || 0),
       };
     },
-    refetchInterval: 10000,
+    refetchInterval: 30000,
   });
 
   const currentLeaderboard = leaderboardData?.topPlayers || [];

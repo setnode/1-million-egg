@@ -27,8 +27,8 @@ export async function GET() {
     });
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Leaderboard Recent API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch recent activity" }, { status: 500 });
   }
 }

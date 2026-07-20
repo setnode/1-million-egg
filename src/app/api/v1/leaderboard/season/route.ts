@@ -7,25 +7,30 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const cacheKey = `v1:leaderboard:stats`;
+    const cacheKey = `v1:leaderboard:season`;
     
-    const data = await withCache(cacheKey, 60, async () => {
+    const data = await withCache(cacheKey, 30, async () => {
       if (!db) throw new Error("Database not configured");
 
       const result = await db.execute(sql`
-        SELECT 
-          COUNT(*) as "totalPlayers",
-          SUM("lifetimePoints") as "globalPoints",
-          SUM("totalTaps") as "globalTaps"
-        FROM "Player"
+        SELECT id, target, "totalEggs"
+        FROM "Season"
+        WHERE id = 0
       `);
+
+      if (result.length === 0) {
+        return { id: 0, target: 1000000, totalEggs: 0 };
+      }
 
       return result[0];
     });
 
     return NextResponse.json(data);
   } catch (error: unknown) {
-    console.error("Leaderboard Stats API Error:", error);
-    return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
+    console.error("Season API Error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch season data" },
+      { status: 500 }
+    );
   }
 }

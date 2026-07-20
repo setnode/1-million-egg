@@ -12,6 +12,14 @@ export async function GET(
   try {
     const { address: rawAddress } = await params;
     const address = rawAddress.toLowerCase();
+
+    // Validate Ethereum address format
+    if (!/^0x[a-f0-9]{40}$/.test(address)) {
+      return NextResponse.json(
+        { error: "Invalid Ethereum address" },
+        { status: 400 }
+      );
+    }
     const cacheKey = `v1:leaderboard:player:${address}`;
     
     const data = await withCache(cacheKey, 15, async () => {
@@ -57,8 +65,8 @@ export async function GET(
     });
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Leaderboard Player API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch player data" }, { status: 500 });
   }
 }

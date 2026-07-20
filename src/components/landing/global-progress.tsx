@@ -50,9 +50,16 @@ export function GlobalProgress() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['global-stats'],
     queryFn: async () => {
-      const res = await fetch('/api/leaderboard?season=0')
-      if (!res.ok) throw new Error('Failed to fetch')
-      return res.json()
+      const [seasonRes, statsRes] = await Promise.all([
+        fetch('/api/v1/leaderboard/season'),
+        fetch('/api/v1/leaderboard/stats')
+      ]);
+      const seasonData = await seasonRes.json();
+      const statsData = await statsRes.json();
+      return {
+        seasonTotalEggs: Number(seasonData.totalEggs || 0),
+        totalPlayers: Number(statsData.totalPlayers || 0),
+      };
     },
     refetchInterval: 30000,
     staleTime: 30000,

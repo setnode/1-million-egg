@@ -3,6 +3,9 @@ import { ponder } from "@/generated";
 // Ensure all addresses are lowercase
 const formatId = (address: string) => address.toLowerCase();
 
+// Track current season ID (updated by SeasonChanged events)
+let currentSeasonId = 0;
+
 ponder.on("MillionEgg:Tapped", async ({ event, context }) => {
   const { player, newScore, globalScore, newEggBalance } = event.args;
   const playerId = formatId(player);
@@ -11,25 +14,26 @@ ponder.on("MillionEgg:Tapped", async ({ event, context }) => {
   const logIndex = event.log.logIndex;
   const eventId = `${txHash}-${logIndex}`;
 
-  // 1. Insert Raw Event
-  await context.db.TapEvent.create({
+  // 1. Upsert Raw Event (idempotent)
+  await context.db.TapEvent.upsert({
     id: eventId,
-    data: {
+    create: {
       blockNumber: event.block.number,
       blockTimestamp: event.block.timestamp,
       transactionHash: txHash,
       logIndex: logIndex,
       chainId: context.network.chainId,
-      contractAddress: event.log.address,
+      contractAddress: formatId(event.log.address),
       
       player: playerId,
       newScore: newScore,
       globalScore: globalScore,
       newEggBalance: newEggBalance,
-    }
+    },
+    update: {}
   });
 
-  // 2. Update Lifetime Aggregate (Player)
+  // 2. Upsert Player Aggregate
   const existingPlayer = await context.db.Player.findUnique({ id: playerId });
   if (existingPlayer) {
     await context.db.Player.update({
@@ -50,6 +54,18 @@ ponder.on("MillionEgg:Tapped", async ({ event, context }) => {
       }
     });
   }
+
+  // 3. Update Season.totalEggs using globalScore (the contract's global counter)
+  await context.db.Season.upsert({
+    id: currentSeasonId,
+    create: {
+      target: 0n,
+      totalEggs: globalScore,
+    },
+    update: {
+      totalEggs: globalScore,
+    }
+  });
 });
 
 ponder.on("MillionEgg:RewardClaimed", async ({ event, context }) => {
@@ -57,20 +73,22 @@ ponder.on("MillionEgg:RewardClaimed", async ({ event, context }) => {
   const playerId = formatId(player);
   const eventId = `${event.transaction.hash}-${event.log.logIndex}`;
 
-  await context.db.RewardClaim.create({
+  // Upsert Raw Event (idempotent)
+  await context.db.RewardClaim.upsert({
     id: eventId,
-    data: {
+    create: {
       blockNumber: event.block.number,
       blockTimestamp: event.block.timestamp,
       transactionHash: event.transaction.hash,
       logIndex: event.log.logIndex,
       chainId: context.network.chainId,
-      contractAddress: event.log.address,
+      contractAddress: formatId(event.log.address),
       
       player: playerId,
       usdcAmount: usdcAmount,
       eggsSpent: eggsSpent,
-    }
+    },
+    update: {}
   });
 });
 
@@ -79,20 +97,22 @@ ponder.on("MillionEgg:DailyClaimed", async ({ event, context }) => {
   const playerId = formatId(player);
   const eventId = `${event.transaction.hash}-${event.log.logIndex}`;
 
-  await context.db.DailyCheckin.create({
+  // Upsert Raw Event (idempotent)
+  await context.db.DailyCheckin.upsert({
     id: eventId,
-    data: {
+    create: {
       blockNumber: event.block.number,
       blockTimestamp: event.block.timestamp,
       transactionHash: event.transaction.hash,
       logIndex: event.log.logIndex,
       chainId: context.network.chainId,
-      contractAddress: event.log.address,
+      contractAddress: formatId(event.log.address),
       
       player: playerId,
       streak: currentStreak,
       eggsGiven: eggsGiven,
-    }
+    },
+    update: {}
   });
 });
 
@@ -119,11 +139,9 @@ ponder.on("MillionEgg:SeasonEggsUpdated", async ({ event, context }) => {
 ponder.on("MillionEgg:SeasonTargetUpdated", async ({ event, context }) => {
   const { newTarget } = event.args;
   
-  // We don't have the season ID in the event, but we can assume the latest or update a config.
-  // We'll upsert season 0 as current for now, or fetch from contract if needed.
-  // For production, the event should emit the season ID, or we track current season globally.
+  // FIX 13: Use currentSeasonId instead of hardcoded 0
   await context.db.Season.upsert({
-    id: 0,
+    id: currentSeasonId,
     create: {
       target: newTarget,
       totalEggs: 0n,
@@ -132,4 +150,40 @@ ponder.on("MillionEgg:SeasonTargetUpdated", async ({ event, context }) => {
       target: newTarget,
     }
   });
+});
+
+// FIX 5: SeasonChanged event handler
+ponder.on("MillionEgg:SeasonChanged", async ({ event, context }) => {
+  const { oldSeason, newSeason } = event.args;
+  const newSeasonId = Number(newSeason);
+  
+  // Update tracked season ID
+  currentSeasonId = newSeasonId;
+
+  // Create new season entry
+  await context.db.Season.upsert({
+    id: newSeasonId,
+    create: {
+      target: 0n, // Will be set by SeasonTargetUpdated
+      totalEggs: 0n,
+    },
+    update: {} // If already exists, don't overwrite
+  });
+});
+
+// FIX 12: StreakRestored event handler
+ponder.on("MillionEgg:StreakRestored", async ({ event, context }) => {
+  const { player, restoredStreak } = event.args;
+  const playerId = formatId(player);
+
+  // Update player's last active timestamp when streak is restored
+  const existingPlayer = await context.db.Player.findUnique({ id: playerId });
+  if (existingPlayer) {
+    await context.db.Player.update({
+      id: playerId,
+      data: {
+        lastActive: event.block.timestamp,
+      }
+    });
+  }
 });
