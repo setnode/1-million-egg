@@ -22,15 +22,13 @@ export async function getPonderPrefix(): Promise<string> {
       const val = metaRes[0].value as any;
       if (val.instance_id) {
         const prefix = `${val.instance_id}__`;
-        // Verify table actually exists (protect against ghost/failed Ponder deployments)
+        // Verify table actually exists AND has data (protect against syncing Ponder deployments)
         const checkRes = await db.execute(sql.raw(`
-          SELECT tablename 
-          FROM pg_tables 
-          WHERE schemaname = 'public' 
-          AND tablename = '${prefix}SeasonPlayer'
+          SELECT count(*) as cnt 
+          FROM "public"."${prefix}SeasonPlayer"
         `));
         
-        if (checkRes.length > 0) {
+        if (checkRes.length > 0 && Number(checkRes[0].cnt) > 0) {
           cachedPrefix = prefix;
           lastFetchTime = now;
           return cachedPrefix;
@@ -45,54 +43,19 @@ export async function getPonderPrefix(): Promise<string> {
 
   // Fallback to highest heartbeat if 'live' doesn't exist
   try {
-    const fallbackRes = await db.execute(sql`
-      SELECT value FROM _ponder_meta WHERE key LIKE 'app_%'
-    `);
-    
-    const instances = [];
-    for (const row of fallbackRes) {
-       const val = row.value as any;
-       if (val && val.instance_id) {
-         instances.push({
-           id: val.instance_id,
-           heartbeat: val.heartbeat_at || 0
-         });
-       }
-    }
-    
-    // Sort by newest heartbeat first
-    instances.sort((a, b) => b.heartbeat - a.heartbeat);
-    
-    for (const inst of instances) {
-      const prefix = `${inst.id}__`;
-      const checkRes = await db.execute(sql.raw(`
-        SELECT tablename 
-        FROM pg_tables 
-        WHERE schemaname = 'public' 
-        AND tablename = '${prefix}SeasonPlayer'
-      `));
-      
-      if (checkRes.length > 0) {
-        cachedPrefix = prefix;
-        lastFetchTime = now;
-        return cachedPrefix;
-      }
-    }
-    
-    // If _ponder_meta fails or returns no valid tables, scan pg_tables directly
     const directTables = await db.execute(sql`
-      SELECT tablename 
-      FROM pg_tables 
-      WHERE schemaname = 'public' 
-      AND tablename LIKE '%__SeasonPlayer'
-      AND tablename NOT LIKE '%_reorg_%'
-      ORDER BY tablename DESC
+      SELECT tablename, (xpath('/row/cnt/text()', xml_count))[1]::text::int as row_count
+      FROM (
+        SELECT tablename, query_to_xml(format('select count(*) as cnt from public.%I', tablename), false, true, '') as xml_count
+        FROM pg_tables
+        WHERE schemaname = 'public' AND tablename LIKE '%__SeasonPlayer' AND tablename NOT LIKE '%reorg%'
+      ) t
+      ORDER BY row_count DESC
     `);
     
     if (directTables.length > 0) {
-      // Just take the first one or we can sort them. The newest is usually fine.
-      const t = directTables[0] as any;
-      const prefix = t.tablename.replace('SeasonPlayer', '');
+      const bestTable = directTables[0] as any;
+      const prefix = bestTable.tablename.replace('SeasonPlayer', '');
       cachedPrefix = prefix;
       lastFetchTime = now;
       return prefix;
