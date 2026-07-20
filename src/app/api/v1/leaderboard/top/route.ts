@@ -22,9 +22,7 @@ export async function GET(request: Request) {
       
       if (type === 'debug_tables') {
         const tables = await db.execute(sql`
-          SELECT tablename
-          FROM pg_tables
-          WHERE schemaname = 'public'
+          SELECT key, value FROM _ponder_meta
         `);
         return tables;
       }
