@@ -58,7 +58,7 @@ export function GlobalProgress() {
         const statsJson = await statsRes.json();
         
         const seasonTotalEggs = (seasonJson.success && seasonJson.data) ? Number(seasonJson.data.totalEggs || 0) : 0;
-        const totalPlayers = (statsJson.success && statsJson.data) ? Math.max(Number(statsJson.data.totalPlayers || 0), 142) : 0;
+        const totalPlayers = (statsJson.success && statsJson.data) ? Number(statsJson.data.totalPlayers || 0) : 0;
 
         return {
           seasonTotalEggs,
