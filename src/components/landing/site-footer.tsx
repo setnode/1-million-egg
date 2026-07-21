@@ -17,8 +17,8 @@ function FarcasterIcon({ className }: { className?: string }) {
 }
 
 const socials = [
-  { label: 'X', href: '#', icon: XIcon },
-  { label: 'Farcaster', href: '#', icon: FarcasterIcon },
+  { label: 'X', href: 'https://x.com/1millionegg', icon: XIcon },
+  { label: 'Farcaster', href: 'https://farcaster.xyz/miniapps/9HVBYCKi21Et/1-million-egg', icon: FarcasterIcon },
 ]
 
 const legal = [
@@ -43,6 +43,8 @@ export function SiteFooter() {
               <a
                 key={social.label}
                 href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={social.label}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-primary"
               >
