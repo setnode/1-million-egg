@@ -230,14 +230,21 @@ export default function Home() {
     toast('Sent to wallet, awaiting approval...', { icon: '🚀' });
     try {
       await writeContractAsync({
+        chainId: 8453,
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: 'tap',
         value: parseEther('0.0000055'),
       });
     } catch (error: any) {
-      if (!error?.shortMessage?.includes('User rejected')) {
-        console.error('Tap transaction error:', error?.shortMessage || error?.message);
+      const msg = error?.shortMessage || error?.message || '';
+      if (!msg.includes('User rejected')) {
+        console.error('Tap transaction error:', msg);
+        if (msg.includes('gasLimit') || msg.includes('funds') || msg.includes('null')) {
+          toast.error('Failed: Insufficient ETH for gas on Base network.', { duration: 5000 });
+        } else {
+          toast.error('Transaction Failed. See console.');
+        }
       }
     }
   }, [isConnected, isPending, isConfirming, writeContractAsync]);
@@ -252,12 +259,25 @@ export default function Home() {
     toast('Claim transaction sent...', { icon: '💰' });
     writeContract(
       {
+        chainId: 8453,
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: 'claimReward',
         args: [confirmClaimTier],
       },
-      { onSuccess: () => toast.success('✨ Reward Claimed Successfully!') }
+      { 
+        onSuccess: () => toast.success('✨ Reward Claimed Successfully!'),
+        onError: (error: any) => {
+          const msg = error?.shortMessage || error?.message || '';
+          if (!msg.includes('User rejected')) {
+            if (msg.includes('gasLimit') || msg.includes('funds') || msg.includes('null')) {
+              toast.error('Failed: Insufficient ETH for gas on Base network.');
+            } else {
+              toast.error('Transaction Failed.');
+            }
+          }
+        }
+      }
     );
     setConfirmClaimTier(null);
   }, [confirmClaimTier, writeContract]);
@@ -267,24 +287,52 @@ export default function Home() {
     toast('Daily Claim sent...', { icon: '🔥' });
     writeContract(
       {
+        chainId: 8453,
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: 'dailyClaim',
         value: parseEther('0.000070'),
       },
-      { onSuccess: () => toast.success(`✨ Day ${streakCount === 0 ? 1 : streakCount + 1} Claimed! +10 Eggs`) }
+      { 
+        onSuccess: () => toast.success(`✨ Day ${streakCount === 0 ? 1 : streakCount + 1} Claimed! +10 Eggs`),
+        onError: (error: any) => {
+          const msg = error?.shortMessage || error?.message || '';
+          if (!msg.includes('User rejected')) {
+            if (msg.includes('gasLimit') || msg.includes('funds') || msg.includes('null')) {
+              toast.error('Failed: Insufficient ETH for gas on Base network.');
+            } else {
+              toast.error('Transaction Failed.');
+            }
+          }
+        }
+      }
     );
   }, [isConnected, writeContract, streakCount]);
 
   const handleRestoreStreak = useCallback(() => {
     if (!isConnected) { toast.error('Please connect your wallet first!'); return; }
     toast('Restoring Streak...', { icon: '❤️‍🩹' });
-    writeContract({
-      address: CONTRACT_ADDRESS,
-      abi: CONTRACT_ABI,
-      functionName: 'restoreStreak',
-      value: parseEther('0.000070'),
-    });
+    writeContract(
+      {
+        chainId: 8453,
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'restoreStreak',
+        value: parseEther('0.000070'),
+      },
+      {
+        onError: (error: any) => {
+          const msg = error?.shortMessage || error?.message || '';
+          if (!msg.includes('User rejected')) {
+            if (msg.includes('gasLimit') || msg.includes('funds') || msg.includes('null')) {
+              toast.error('Failed: Insufficient ETH for gas on Base network.');
+            } else {
+              toast.error('Transaction Failed.');
+            }
+          }
+        }
+      }
+    );
   }, [isConnected, writeContract]);
 
   if (!isMounted) return null;
