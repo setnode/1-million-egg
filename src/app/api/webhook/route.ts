@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseWebhookEvent, createVerifyAppKeyWithHub } from "@farcaster/frame-node";
+import { parseWebhookEvent, createVerifyAppKeyWithHub } from "@farcaster/miniapp-node";
 import { db } from "@/services/db";
 import { notificationToken } from "@/services/db/schema";
 import { eq } from "drizzle-orm";
