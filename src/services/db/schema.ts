@@ -1,4 +1,4 @@
-import { pgTable, text, bigint, integer, index } from "drizzle-orm/pg-core";
+import { pgTable, text, bigint, integer, index, timestamp, uuid, unique } from "drizzle-orm/pg-core";
 
 export const player = pgTable("Player", {
   id: text("id").primaryKey(), // lowercase address
@@ -73,3 +73,28 @@ export const dailyCheckin = pgTable("DailyCheckin", {
   streak: bigint("streak", { mode: "number" }).notNull(),
   eggsGiven: bigint("eggsGiven", { mode: "number" }).notNull(),
 });
+
+export const playerFid = pgTable("app_PlayerFid", {
+  address: text("address").primaryKey(), // lowercase address
+  fid: integer("fid").notNull(),
+});
+
+export const notificationToken = pgTable("app_NotificationToken", {
+  fid: integer("fid").primaryKey(),
+  notificationUrl: text("notificationUrl").notNull(),
+  notificationToken: text("notificationToken").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const notificationQueue = pgTable("app_NotificationQueue", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  playerAddress: text("playerAddress").notNull(),
+  type: text("type").notNull(), // e.g., 'daily_claim'
+  status: text("status").notNull().default("pending"), // 'pending', 'processing', 'sent', 'failed', 'cancelled'
+  sendAt: bigint("sendAt", { mode: "number" }).notNull(), // Unix timestamp in seconds
+  retryCount: integer("retryCount").notNull().default(0),
+}, (table) => ([
+  index("idx_nq_status_send_at").on(table.status, table.sendAt),
+  // Benzersiz kayıt constrainti: Aynı kullanıcıya, aynı tipte ve aynı zamanda birden fazla bildirim oluşturulamaz
+  unique("uq_nq_player_type_send_at").on(table.playerAddress, table.type, table.sendAt),
+]));
