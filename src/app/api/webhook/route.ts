@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const eventType = event.event;
 
     // 2. Event'e göre işlem yap (Idempotent UPSERT/DELETE)
-    if (eventType === "frame_added" || eventType === "notifications_enabled") {
+    if (eventType === "miniapp_added" || eventType === "notifications_enabled") {
       // @ts-ignore - notificationDetails will be available in these events
       const notificationDetails = event.notificationDetails;
       
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
             },
           });
       }
-    } else if (eventType === "frame_removed" || eventType === "notifications_disabled") {
+    } else if (eventType === "miniapp_removed" || eventType === "notifications_disabled") {
       // Kullanıcı frame'i kaldırdıysa token'ı güvenli şekilde sil
       await db.delete(notificationToken).where(eq(notificationToken.fid, fid));
     }
