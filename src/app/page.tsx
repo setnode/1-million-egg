@@ -235,6 +235,7 @@ export default function Home() {
         abi: CONTRACT_ABI,
         functionName: 'tap',
         value: parseEther('0.0000055'),
+        gas: BigInt(200000),
       });
     } catch (error: any) {
       const msg = error?.shortMessage || error?.message || '';
@@ -264,6 +265,7 @@ export default function Home() {
         abi: CONTRACT_ABI,
         functionName: 'claimReward',
         args: [confirmClaimTier],
+        gas: BigInt(200000),
       },
       { 
         onSuccess: () => toast.success('✨ Reward Claimed Successfully!'),
@@ -292,6 +294,7 @@ export default function Home() {
         abi: CONTRACT_ABI,
         functionName: 'dailyClaim',
         value: parseEther('0.000070'),
+        gas: BigInt(200000),
       },
       { 
         onSuccess: () => toast.success(`✨ Day ${streakCount === 0 ? 1 : streakCount + 1} Claimed! +10 Eggs`),
@@ -319,6 +322,7 @@ export default function Home() {
         abi: CONTRACT_ABI,
         functionName: 'restoreStreak',
         value: parseEther('0.000070'),
+        gas: BigInt(200000),
       },
       {
         onError: (error: any) => {
